@@ -3,25 +3,49 @@
 
 import requests
 import json
+import sys
 
-def fetch_all_employees_data():
-    users_data = requests.get('https://jsonplaceholder.typicode.com/users').json()
-    todos_data = requests.get('https://jsonplaceholder.typicode.com/todos').json()
+def export_todo_data():
+    """ Fetch and display TODO list progress for all employees """
 
-    all_employee_data = {}
+    users_url = "https://jsonplaceholder.typicode.com/users"
+    todos_url = "https://jsonplaceholder.typicode.com/todos"
 
-    for user in users_data:
-        user_id = user['id']
-        user_name = user['name']
-        all_employee_data[user_id] = [{"username": user_name, "task": task["title"], "completed": task["completed"]} for task in todos_data if task['userId'] == user_id]
+    try:
+        response_users = requests.get(users_url)
+        response_todos = requests.get(todos_url)
 
-    return all_employee_data
+        users = response_users.json()
+        todos = response_todos.json()
 
-def export_to_json(data):
-    with open('todo_all_employees.json', 'w') as file:
-        json.dump(data, file)
+        user_dict = {}
 
-    print("Data exported to todo_all_employees.json")
+        for user in users:
+            user_id = str(user.get("id"))
+            username = user.get("username")
+            tasks = []
+
+            for todo in todos:
+                if todo.get("userId") == user.get("id"):
+                    task_data = {
+                        "username": username,
+                        "task": todo.get("title"),
+                        "completed": todo.get("completed")
+                    }
+                    tasks.append(task_data)
+
+            user_dict[user_id] = tasks
+
+        json_file_name = "todo_all_employees.json"
+        with open(json_file_name, "w") as json_file:
+            json.dump(user_dict, json_file)
+
+
+    except requests.exceptions.RequestException as e:
+        print("Error fetching data: {}".format(e))
+        sys.exit(1)
+
 
 if __name__ == "__main__":
-    export_to_json(fetch_all_employees_data())
+    # Call the export_todo_data function
+    export_todo_data()

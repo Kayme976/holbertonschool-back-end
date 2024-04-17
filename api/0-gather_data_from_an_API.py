@@ -3,28 +3,30 @@
 the progress of the TODO list for a specified employee ID."""
 
 import requests
-from sys import argv
+import sys
 
 
 if __name__ == "__main__":
+    to_do = requests.get('https://jsonplaceholder.typicode.com/todos?userId=' +
+                         sys.argv[1], timeout=5)
+    names = requests.get('https://jsonplaceholder.typicode.com/users/' +
+                         sys.argv[1], timeout=5)
 
-    user_id = argv[1]
+    json_todo = to_do.json()
+    json_names = names.json()
 
-    infos = requests.get(
-        'https://jsonplaceholder.typicode.com/users/{}'.format(user_id))
-    user = infos.json()
-    employee = user.get("name")
+    all_tasks = 0
+    tasks_completed = 0
 
-    infos = requests.get(
-        'https://jsonplaceholder.typicode.com/todos?userID={}'.format(user_id))
-    todos = infos.json()
-    total_tasks = len(todos)
+    titles_completed = []
+    for task in json_todo:
+        all_tasks += 1
+        if task["completed"] is True:
+            tasks_completed += 1
+            titles_completed.append(task["title"])
 
-    tasks_done = [task for task
-                            in todos if task.get("completed") is True]
+    print('Employee {} is done with tasks({}/{}):'
+          .format(json_names['name'], tasks_completed, all_tasks))
 
-    print("Employee {} is done with task({}/{}):".format
-          (employee, len(tasks_done), total_tasks))
-
-    for task in tasks_done:
-        print("\t {}".format(task.get("title")))
+    for title_task in titles_completed:
+        print('\t {}'.format(title_task))
