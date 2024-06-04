@@ -1,40 +1,43 @@
 #!/usr/bin/python3
-"""Script that, using this REST API, for a given employee ID,
-returns information about his/her TODO list progress"""
+"""Gathering data from an API for a given employee
+ID that display a TO-DO list progress."""
 
 import requests
 import sys
 
 
+def api(employee_id):
+    """
+    YES sirrr
+    """
+    user_link = requests.get(
+        f'https://jsonplaceholder.typicode.com/users/{employee_id}')
+    todos_link = requests.get(
+        f"https://jsonplaceholder.typicode.com/users/{employee_id}/todos")
+
+    data_user = user_link.json()
+    data_todo = todos_link.json()
+
+    usrname = data_user['name']
+
+    nb_tasks = len(data_todo)
+
+    done_tasks = len(
+        [todo for todo in data_todo if todo['completed']]
+    )
+
+    str1 = f"Employee {usrname} is done with tasks"
+    str2 = f"({done_tasks}/{nb_tasks}):"
+    print(str1 + str2)
+
+    for todo in data_todo:
+        if todo['completed']:
+            print('\t ' + todo['title'])
+
+
 if __name__ == "__main__":
-
-    employee_id = int(sys.argv[1])
-
-    todos_response = requests.get(
-        "https://jsonplaceholder.typicode.com/todos")
-    employees_response = requests.get(
-        "https://jsonplaceholder.typicode.com/users")
-
-    todos = todos_response.json()
-    employees = employees_response.json()
-
-    employee_name = None
-    employee_completed_tasks = []
-
-    for employee in employees:
-        if employee["id"] == employee_id:
-            employee_name = employee["name"]
-            break
-
-    for task in todos:
-        if task["userId"] == employee_id:
-            if task["completed"]:
-                employee_completed_tasks.append(task["title"])
-
-    total_tasks = sum(1 for task in todos if task["userId"] == employee_id)
-    num_completed_tasks = len(employee_completed_tasks)
-
-    print(f"Employee {employee_name} is done with tasks({
-        num_completed_tasks}/{total_tasks}):")
-    for title in employee_completed_tasks:
-        print(f"\t {title}")
+    try:
+        employee_id = sys.argv[1]
+        api(employee_id)
+    except Exception as e:
+        pass
