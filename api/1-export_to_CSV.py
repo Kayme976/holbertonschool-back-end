@@ -1,32 +1,40 @@
 #!/usr/bin/python3
-"""That export data in the CSV format."""
+"""Script that, using this REST API, for a given employee ID,
+returns information about his/her TODO list progress and exports
+the data in CSV format"""
 
+import csv
 import requests
 import sys
-import csv
+
 
 if __name__ == "__main__":
-    to_do = requests.get('https://jsonplaceholder.typicode.com/todos?userId=' +
-                         sys.argv[1], timeout=5)
-    names = requests.get('https://jsonplaceholder.typicode.com/users/' +
-                         sys.argv[1], timeout=5)
 
-    json_todo = to_do.json()
-    json_names = names.json()
+    employee_id = int(sys.argv[1])
 
-    all_tasks = 0
-    tasks_completed = 0
+    todos_response = requests.get(
+        "https://jsonplaceholder.typicode.com/todos")
+    employees_response = requests.get(
+        "https://jsonplaceholder.typicode.com/users")
 
-    titles_completed = []
-    for task in json_todo:
-        all_tasks += 1
-        if task["completed"] is True:
-            tasks_completed += 1
-            titles_completed.append(task["title"])
+    todos = todos_response.json()
+    employees = employees_response.json()
 
-    csv_f = '{}.csv'.format(sys.argv[1])
-    with open(csv_f, mode='w') as csv_file:
-        csv_writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
-        for task in json_todo:
-            csv_writer.writerow([json_names['id'], json_names['username'],
-                                 task["completed"], task["title"]])
+    employee_name = None
+    employee_username = None
+    employee_completed_tasks = []
+
+    for employee in employees:
+        if employee["id"] == employee_id:
+            employee_name = employee["name"]
+            employee_username = employee["username"]
+            break
+
+    output_filename = f"{employee_id}.csv"
+    with open(output_filename, "w", newline="") as csvfile:
+        csv_writer = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+        for task in todos:
+            if task.get("userId") == employee_id:
+                csv_writer.writerow(
+                    [employee.get("id"), employee.get("username"),
+                     task.get("completed"), task.get("title")])

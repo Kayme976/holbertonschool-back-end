@@ -1,41 +1,42 @@
 #!/usr/bin/python3
-"""That export data in the JSON format"""
+"""Script to export data in the JSON format"""
 
+import json
 import requests
 import sys
-import json
+
 
 if __name__ == "__main__":
-    to_do = requests.get('https://jsonplaceholder.typicode.com/todos?userId=' +
-                         sys.argv[1], timeout=5)
-    names = requests.get('https://jsonplaceholder.typicode.com/users/' +
-                         sys.argv[1], timeout=5)
+    employee_id = int(sys.argv[1])
 
-    json_todo = to_do.json()
-    json_names = names.json()
+    todos_response = requests.get(
+        "https://jsonplaceholder.typicode.com/todos")
+    employees_response = requests.get(
+        "https://jsonplaceholder.typicode.com/users")
 
-    all_tasks = 0
-    tasks_completed = 0
+    todos = todos_response.json()
+    employees = employees_response.json()
 
-    titles_completed = []
-    for task in json_todo:
-        all_tasks += 1
-        if task["completed"] is True:
-            tasks_completed += 1
-            titles_completed.append(task["title"])
+    employee_name = None
 
-    my_dict = {}
-    this_list = []
+    employee_id = int(sys.argv[1])
+    json_object = {}
+    tasks_list = []
 
-    for item in json_todo:
-        task_dict = {}
-        task_dict["task"] = item['title']
-        task_dict["completed"] = item['completed']
-        task_dict["username"] = json_names['username']
-        this_list.append(task_dict)
+    for employee in employees:
+        if employee.get("id") == employee_id:
+            our_employee = employee
 
-    my_dict[sys.argv[1]] = this_list
+    for task in todos:
+        if task.get("userId") == employee_id:
+            task_dict = {}
+            task_dict["task"] = task.get("title")
+            task_dict["completed"] = task.get("completed")
+            task_dict["username"] = our_employee.get("username")
+            tasks_list.append(task_dict)
 
-    json_f = sys.argv[1] + '.json'
-    with open(json_f, mode='w') as json_file:
-        json.dump(my_dict, json_file)
+    json_object[str(our_employee.get("id"))] = tasks_list
+    filename = str(our_employee.get("id")) + ".json"
+
+    with open(filename, "w") as file:
+        json.dump(json_object, file)

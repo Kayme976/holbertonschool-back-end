@@ -1,32 +1,40 @@
-#!/usr/bin/python
-"""That utilizes a REST API to retrieve information about
-the progress of the TODO list for a specified employee ID."""
+#!/usr/bin/python3
+"""Script that, using this REST API, for a given employee ID,
+returns information about his/her TODO list progress"""
 
 import requests
 import sys
 
 
 if __name__ == "__main__":
-    to_do = requests.get('https://jsonplaceholder.typicode.com/todos?userId=' +
-                         sys.argv[1], timeout=5)
-    names = requests.get('https://jsonplaceholder.typicode.com/users/' +
-                         sys.argv[1], timeout=5)
 
-    json_todo = to_do.json()
-    json_names = names.json()
+    employee_id = int(sys.argv[1])
 
-    all_tasks = 0
-    tasks_completed = 0
+    todos_response = requests.get(
+        "https://jsonplaceholder.typicode.com/todos")
+    employees_response = requests.get(
+        "https://jsonplaceholder.typicode.com/users")
 
-    titles_completed = []
-    for task in json_todo:
-        all_tasks += 1
-        if task["completed"] is True:
-            tasks_completed += 1
-            titles_completed.append(task["title"])
+    todos = todos_response.json()
+    employees = employees_response.json()
 
-    print('Employee {} is done with tasks({}/{}):'
-          .format(json_names['name'], tasks_completed, all_tasks))
+    employee_name = None
+    employee_completed_tasks = []
 
-    for title_task in titles_completed:
-        print('\t {}'.format(title_task))
+    for employee in employees:
+        if employee["id"] == employee_id:
+            employee_name = employee["name"]
+            break
+
+    for task in todos:
+        if task["userId"] == employee_id:
+            if task["completed"]:
+                employee_completed_tasks.append(task["title"])
+
+    total_tasks = sum(1 for task in todos if task["userId"] == employee_id)
+    num_completed_tasks = len(employee_completed_tasks)
+
+    print(f"Employee {employee_name} is done with tasks({
+        num_completed_tasks}/{total_tasks}):")
+    for title in employee_completed_tasks:
+        print(f"\t {title}")
